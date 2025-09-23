@@ -35,15 +35,15 @@ def fetch_poster(movie_id):
         return "https://image.tmdb.org/t/p/w500" + poster_path
     return "https://via.placeholder.com/500x750?text=No+Image"   # fallback if no poster
 
-# ----------------------
+
 # Load data
-# ----------------------
+
 movies = pickle.load(open('movie_dic.pkl', 'rb'))
 similarity = pickle.load(open('similarity.pkl', 'rb'))
 
-# ----------------------
+
 # Recommend function
-# ----------------------
+
 def recommend(movie):
     movie = movie.lower()
     matches = movies[movies['title'].str.lower() == movie]
@@ -64,9 +64,9 @@ def recommend(movie):
 
     return recommended_movies, recommended_posters
 
-# ----------------------
+
 # Streamlit UI
-# ----------------------
+
 st.title("🎬 Movie Recommender System")
 
 selected_movie = st.selectbox(
