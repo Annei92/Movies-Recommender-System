@@ -9,6 +9,21 @@ from PIL import Image
 
 banner = Image.open("banner.webp")  
 st.image(banner, use_container_width=True)
+st.image(banner, use_container_width=True)
+st.markdown("<h1 style='text-align: center;'>Movie Recommender System </h1>", unsafe_allow_html=True)
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background: linear-gradient(to right, #141e30, #243b55);
+        color: white;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
 load_dotenv()
 TMDB_API_KEY = os.getenv("TMDB_API_KEY") 
 
