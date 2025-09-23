@@ -5,6 +5,8 @@ import requests
 import os
 import gdown
 from dotenv import load_dotenv
+from PIL import Image
+
 banner = Image.open("banner.webp")  
 st.image(banner, use_container_width=True)
 load_dotenv()
