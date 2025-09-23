@@ -7,7 +7,7 @@ import os
 
 MOVIE_DIC_ID = "1DwzwzVJ_rwpNt-IN92ymqYRbWsREpivZ"   
 SIMILARITY_ID = "1wOIEQa6K6aVwklVrgH8-RyxrbocFr-GT"  
-API_KEY = os.getenv("TMDB_API_KEY")  # from .env file
+API_KEY = st.secrets["TMDB_API_KEY"]
 def download_file(file_id, output):
     """Download file from Google Drive if not exists"""
     if not os.path.exists(output):
