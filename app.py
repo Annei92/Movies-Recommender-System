@@ -6,20 +6,12 @@ import os
 import gdown
 from dotenv import load_dotenv
 
-# ======================
-# CONFIG
-# ======================
-# Load environment variables (for local run)
 load_dotenv()
 TMDB_API_KEY = os.getenv("TMDB_API_KEY") 
 
-# Google Drive file IDs
 MOVIE_DIC_ID = "1DwzwzVJ_rwpNt-IN92ymqYRbWsREpivZ"   # movie_dic.pkl
 SIMILARITY_ID = "1wOIEQa6K6aVwklVrgH8-RyxrbocFr-GT"  # similarity.pkl
 
-# ======================
-# HELPERS
-# ======================
 def download_file(file_id, output):
     """Download file from Google Drive if not exists"""
     if not os.path.exists(output):
@@ -52,30 +44,23 @@ def recommend(movie):
 
     recommendations = []
     for i in movie_list:
-        movie_id = movies.iloc[i[0]].movie_id   # ✅ FIXED
+        movie_id = movies.iloc[i[0]].movie_id   
         title = movies.iloc[i[0]].title
         poster = fetch_poster(movie_id)
         recommendations.append((title, poster))
 
     return recommendations
 
-# ======================
-# DOWNLOAD FILES
-# ======================
 download_file(MOVIE_DIC_ID, "movie_dic.pkl")
 download_file(SIMILARITY_ID, "similarity.pkl")
 
-# ======================
-# LOAD DATA
-# ======================
+
 movies = pickle.load(open("movie_dic.pkl", "rb"))
 similarity = pickle.load(open("similarity.pkl", "rb"))
 movies = pd.DataFrame(movies)
 
-# ======================
-# STREAMLIT UI
-# ======================
-st.title("🎬 Movie Recommender System")
+
+st.title(" Movie Recommender System")
 
 selected_movie = st.selectbox(
     "Search for a movie:", movies["title"].values
@@ -85,13 +70,13 @@ if st.button("Recommend"):
     recs = recommend(selected_movie)
 
     if not recs:
-        st.warning("❌ Movie not found in database.")
+        st.warning(" Movie not found in database.")
     else:
         st.write("### Top 5 Recommendations:")
         cols = st.columns(5, gap="large")
         for idx, (title, poster) in enumerate(recs):
             with cols[idx]:
-                st.image(poster, use_column_width=True)
+                st.image(poster, use_container_width=True)
                 st.markdown(
                     f"<p style='text-align:center; margin-top:10px;'>{title}</p>",
                     unsafe_allow_html=True,
