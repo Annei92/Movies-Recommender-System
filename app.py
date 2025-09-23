@@ -14,13 +14,18 @@ st.markdown(
     """
     <style>
     .stApp {
-        background: linear-gradient(to right, #141e30, #243b55);
-        color: white;
+        padding: 0;
+    }
+    .stImage > img {
+        width: 100% !important;
+        height: auto;
     }
     </style>
     """,
     unsafe_allow_html=True
 )
+st.image(banner)
+
 
 
 load_dotenv()
