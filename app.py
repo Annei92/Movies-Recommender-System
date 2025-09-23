@@ -7,18 +7,15 @@ import os
 import gdown
 import os
 
-# Google Drive file IDs
-MOVIE_DIC_ID = "1DwzwzVJ_rwpNt-IN92ymqYRbWsREpivZ"
-SIMILARITY_ID = "1wOIEQa6K6aVwklVrgH8-RyxrbocFr-GT"
-
 def download_file(file_id, output):
     url = f"https://drive.google.com/uc?id={file_id}"
-    if not os.path.exists(output):  # download only if file missing
+    if not os.path.exists(output):
         gdown.download(url, output, quiet=False)
 
-# Download required files
-download_file(MOVIE_DIC_ID, "movie_dic.pkl")
-download_file(SIMILARITY_ID, "similarity.pkl")
+# Use your IDs here
+download_file("1DwzwzVJ_rwpNt-IN92ymqYRbWsREpivZ", "movie_dic.pkl")
+download_file("1wOIEQa6K6aVwklVrgH8-RyxrbocFr-GT", "similarity.pkl")
+
 
 # .env file
 load_dotenv()
