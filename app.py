@@ -57,13 +57,17 @@ selected_movie = st.selectbox(
     movies['title'].values
 )
 if st.button("Recommend"):
-    names, posters = recommend(selected_movie)
+    recs = recommend(selected_movie)
 
-    if not names:
-        st.error(" Movie not found in database")
-    else:
-        st.write("### Top 5 Recommendations:")
-        cols = st.columns(5)  # 5 small boxes
-        for idx, col in enumerate(cols):
-            with col:
-                st.image(posters[idx], caption=names[idx], width=150)
+    st.write("### Top 5 Recommendations:")
+
+    cols = st.columns(5, gap="large")  # 👈 adds spacing between posters
+
+    for idx, (title, poster) in enumerate(recs):
+        with cols[idx]:
+            st.image(poster, use_column_width=True)
+            st.markdown(
+                f"<p style='text-align:center; margin-top:10px;'>{title}</p>",
+                unsafe_allow_html=True
+            )
+
