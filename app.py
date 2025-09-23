@@ -10,7 +10,7 @@ from PIL import Image
 banner = Image.open("banner.webp")  
 st.image(banner, use_container_width=True)
 st.markdown("<h1 style='text-align: center;'>Movie Recommender System </h1>", unsafe_allow_html=True)
-# CSS to stretch banner full width
+
 st.markdown(
     """
     <style>
