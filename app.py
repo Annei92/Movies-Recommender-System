@@ -5,7 +5,8 @@ import requests
 import os
 import gdown
 from dotenv import load_dotenv
-
+banner = Image.open("banner.webp")  
+st.image(banner, use_container_width=True)
 load_dotenv()
 TMDB_API_KEY = os.getenv("TMDB_API_KEY") 
 
