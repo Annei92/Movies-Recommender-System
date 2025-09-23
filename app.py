@@ -25,9 +25,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.markdown(f"<img src='data:image/png;base64,{banner_to_base64}' class='full-width-banner'>", unsafe_allow_html=True)
-
-
 
 
 load_dotenv()
