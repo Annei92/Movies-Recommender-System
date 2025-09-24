@@ -24,7 +24,7 @@ st.markdown(
     <style>
     [data-testid="stVerticalBlock"] { gap: 0.75rem; }
 
-    /* Star rating component */
+    /* Star rating component (visual only) */
     .stars {
         position: relative;
         display: inline-block;
@@ -55,16 +55,16 @@ st.markdown(
         margin-top:10px;
         line-height: 1.2;
     }
-    .muted { opacity: 0.75; font-size: 0.9em; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
+
 load_dotenv()
 TMDB_API_KEY = os.getenv("TMDB_API_KEY") or st.secrets.get("TMDB_API_KEY", None)
 
-# Google Drive file IDs
+
 MOVIE_DIC_ID = "1DwzwzVJ_rwpNt-IN92ymqYRbWsREpivZ"   # movie_dic.pkl
 SIMILARITY_ID = "1wOIEQa6K6aVwklVrgH8-RyxrbocFr-GT"  # similarity.pkl
 
@@ -93,23 +93,19 @@ def fetch_poster(movie_id):
     return placeholder
 
 def _stars_from_score(score, s_min, s_max):
-    """
-    Map similarity -> 0..5 stars (float), with min-max scaling per query movie.
-    Returns (rating_0_to_5, width_percent_for_css).
-    """
-    # Protect against degenerate ranges
+    """Map similarity -> 0..5 stars (float) via min–max scaling (per query)."""
     if s_max <= s_min:
         rating = 5.0 if score > 0 else 0.0
     else:
         norm = (score - s_min) / (s_max - s_min)
         rating = 5.0 * norm
     rating = max(0.0, min(5.0, float(rating)))
-    return rating, rating / 5.0 * 100.0
+    return rating, rating / 5.0 * 100.0  # (stars, percent width)
 
 def recommend(movie, k=5):
     """
     Return top-k similar movies with dicts:
-    { title, poster, score, stars (0..5), stars_pct (0..100 for CSS) }
+    { title, poster, stars (0..5), stars_pct (0..100 for CSS) }
     """
     movie = str(movie).lower()
     matches = movies[movies["title"].str.lower() == movie]
@@ -119,14 +115,12 @@ def recommend(movie, k=5):
     movie_index = matches.index[0]
     distances = similarity[movie_index]
 
-    # Sort by similarity descending
     ranked = sorted(enumerate(distances), key=lambda x: x[1], reverse=True)
 
-   
+    # Build a small pool to compute min/max for nicer scaling
     pool = [(idx, float(score)) for idx, score in ranked if idx != movie_index][:max(k, 10)]
     if not pool:
         return []
-
 
     pool_scores = [s for _, s in pool]
     s_min, s_max = min(pool_scores), max(pool_scores)
@@ -140,7 +134,6 @@ def recommend(movie, k=5):
         recs.append({
             "title": title,
             "poster": poster,
-            "score": score,
             "stars": stars,
             "stars_pct": stars_pct
         })
@@ -178,16 +171,14 @@ if st.button("Recommend", use_container_width=True) and selected_movie:
         for i, r in enumerate(recs):
             with cols[i % len(cols)]:
                 st.image(r["poster"], use_container_width=True)
-                # star rating bar + numeric hint
+                # stars only (no numeric rating, no similarity)
                 st.markdown(
                     f"""
                     <p class="caption">
                         <strong>{r["title"]}</strong><br>
-                        <span class="stars">
+                        <span class="stars" aria-label="rating">
                           <span class="stars-fill" style="width:{r["stars_pct"]:.0f}%"></span>
                         </span>
-                        <span class="muted">({r["stars"]:.1f}/5)</span>
-                        <br><span class="muted">similarity: {r["score"]:.3f}</span>
                     </p>
                     """,
                     unsafe_allow_html=True,
