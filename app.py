@@ -10,14 +10,24 @@ import numpy as np
 
 
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
+st.markdown("""
+<style>
+/* center the whole app and cap its width */
+.block-container {max-width: 1000px; margin: 0 auto;}
+/* optional: a bit more space under the banner */
+.banner-wrap { display:flex; justify-content:center; margin: 8px 0 18px; }
+</style>
+""", unsafe_allow_html=True)
+
 
 try:
     banner = Image.open("banner.webp")
-    st.image( banner, 
-        width=500,               
-        use_column_width=False )
+    c1, c2, c3 = st.columns([1, 2, 1])   # center column is narrower
+    with c2:
+        st.image(banner, use_container_width=True)  # will fit the middle column
 except Exception:
     pass
+
 
 st.markdown("<h1 style='text-align: center;'>Movie Recommender System</h1>", unsafe_allow_html=True)
 
