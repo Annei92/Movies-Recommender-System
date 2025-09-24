@@ -7,35 +7,83 @@ from dotenv import load_dotenv
 from PIL import Image
 import gdown
 
-
+# ------------------------------
+# Page config + global width cap
+# ------------------------------
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
 st.markdown("""
 <style>
-
+/* center the whole app and cap width */
 .block-container { max-width: 1000px; margin: 0 auto; }
-
-
+/* tighter default spacing */
 [data-testid="stVerticalBlock"] { gap: 0.75rem; }
 
+/* bordered results container that expands with content */
+.results-box{
+  border: 1px solid rgba(120,120,120,.25);
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 12px;
+  background: rgba(0,0,0,0.02);
+}
+[data-theme="dark"] .results-box{
+  border-color: rgba(255,255,255,.15);
+  background: rgba(255,255,255,0.03);
+}
 
-.stars{position:relative;display:inline-block;font-size:16px;line-height:1.2;margin-top:6px;margin-bottom:6px;color:#d0d4db;letter-spacing:2px;user-select:none}
-.stars::before{content:"★★★★★"}
-.stars-fill{position:absolute;top:0;left:0;overflow:hidden;white-space:nowrap;width:0;color:#f5a623}
-.stars-fill::before{content:"★★★★★";letter-spacing:2px}
+/* compact responsive grid (SMALL tiles) */
+.rec-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.rec-tile{ text-align: center; }
 
-.results-box{border:1px solid rgba(120,120,120,.25);border-radius:12px;padding:14px;margin-top:12px;background:rgba(0,0,0,0.02)}
-[data-theme="dark"] .results-box{border-color:rgba(255,255,255,.15);background:rgba(255,255,255,0.03)}
+.rec-poster{
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
 
+/* stars: visual-only rating; no overlap with title */
+.stars{
+  position: relative;
+  display: inline-block;
+  font-size: 12px;
+  line-height: 1.2;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  color: #d0d4db;
+  letter-spacing: 2px;
+  user-select: none;
+}
+.stars::before{ content: "★★★★★"; }
+.stars-fill{
+  position: absolute; top: 0; left: 0;
+  overflow: hidden; white-space: nowrap; width: 0;
+  color: #f5a623;
+}
+.stars-fill::before{ content: "★★★★★"; letter-spacing: 2px; }
 
-.rec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;align-items:start}
-.rec-tile{text-align:center}
-.rec-poster{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:10px;display:block;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.rec-title{font-size:13px;line-height:1.3;margin-top:2px;min-height:34px} 
+/* titles: keep rows aligned even when wrapping */
+.rec-title{
+  font-size: 12px;
+  line-height: 1.25;
+  min-height: 30px;
+}
+
+/* generic caption style (if needed) */
 .caption{text-align:center;margin-top:10px;line-height:1.2}
 </style>
 """, unsafe_allow_html=True)
 
-
+# ------------------------------
+# Centered column for all top content
+# ------------------------------
 L, C, R = st.columns([1, 6, 1])   # C is the centered content column
 with C:
     # Banner (fits same width as the form)
@@ -57,7 +105,9 @@ TMDB_API_KEY = os.getenv("TMDB_API_KEY") or st.secrets.get("TMDB_API_KEY", None)
 MOVIE_DIC_ID = "1DwzwzVJ_rwpNt-IN92ymqYRbWsREpivZ"   # movie_dic.pkl
 SIMILARITY_ID = "1wOIEQa6K6aVwklVrgH8-RyxrbocFr-GT"  # similarity.pkl
 
-
+# ------------------------------
+# Helpers
+# ------------------------------
 def download_file(file_id: str, output: str):
     """Download file from Google Drive if not exists."""
     if not os.path.exists(output):
@@ -65,7 +115,7 @@ def download_file(file_id: str, output: str):
         gdown.download(url, output, quiet=False)
 
 def fetch_poster(movie_id: int) -> str:
-    """Fetch poster from TMDB API (w200 for speed)."""
+    """Fetch poster from TMDB API (w200 for compact tiles)."""
     placeholder = "https://via.placeholder.com/200x300.png?text=No+Image"
     if not TMDB_API_KEY:
         return placeholder
@@ -118,14 +168,18 @@ def recommend(movie: str, k: int = 12):
         recs.append({"title": title, "poster": poster, "stars": stars, "stars_pct": stars_pct})
     return recs
 
-
+# ------------------------------
+# Load artifacts
+# ------------------------------
 download_file(MOVIE_DIC_ID, "movie_dic.pkl")
 download_file(SIMILARITY_ID, "similarity.pkl")
 movies = pickle.load(open("movie_dic.pkl", "rb"))
 similarity = pickle.load(open("similarity.pkl", "rb"))
 movies = pd.DataFrame(movies)
 
-
+# ------------------------------
+# Controls (inside centered column)
+# ------------------------------
 with C:
     col1, col2 = st.columns([3, 1])
     with col1:
@@ -143,7 +197,9 @@ with C:
     with b2:
         go = st.button("Recommend", type="primary", use_container_width=True)
 
-
+# ------------------------------
+# Results (bordered, compact grid, aligned)
+# ------------------------------
 if go and selected_movie:
     recs = recommend(selected_movie, k=k)
 
@@ -156,16 +212,16 @@ if go and selected_movie:
             # bordered wrapper that expands with content
             st.markdown('<div class="results-box">', unsafe_allow_html=True)
 
-            # responsive grid
+            # compact responsive grid (SMALL tiles)
             st.markdown('<div class="rec-grid">', unsafe_allow_html=True)
             for r in recs:
                 st.markdown(
                     f"""
                     <div class="rec-tile">
                         <img class="rec-poster" src="{r['poster']}" alt="{r['title']}"/>
-                        <div class="stars" aria-label="rating">
+                        <span class="stars" aria-label="rating">
                           <span class="stars-fill" style="width:{r['stars_pct']:.0f}%"></span>
-                        </div>
+                        </span>
                         <div class="rec-title">{r['title']}</div>
                     </div>
                     """,
