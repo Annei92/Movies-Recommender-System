@@ -13,7 +13,9 @@ st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wid
 
 try:
     banner = Image.open("banner.webp")
-    st.image(banner, width=720)
+    st.image( banner, 
+        width=500,               
+        use_column_width=False )
 except Exception:
     pass
 
