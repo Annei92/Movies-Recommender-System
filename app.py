@@ -1,39 +1,47 @@
-import streamlit as st
-import pickle
-import pandas as pd
-import requests
 import os
-import gdown
+import pickle
+import requests
+import pandas as pd
+import streamlit as st
 from dotenv import load_dotenv
 from PIL import Image
+import gdown
 
-# ------------------------------
-# Page config + global width cap
-# ------------------------------
+
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
 st.markdown("""
 <style>
-/* cap the page width and center the whole app */
+
 .block-container { max-width: 1000px; margin: 0 auto; }
-/* smaller gaps for a tighter look */
+
+
 [data-testid="stVerticalBlock"] { gap: 0.75rem; }
-/* star rating (visual only) */
-.stars{position:relative;display:inline-block;font-size:20px;line-height:1;color:#d0d4db;letter-spacing:3px;user-select:none}
+
+
+.stars{position:relative;display:inline-block;font-size:16px;line-height:1.2;margin-top:6px;margin-bottom:6px;color:#d0d4db;letter-spacing:2px;user-select:none}
 .stars::before{content:"★★★★★"}
 .stars-fill{position:absolute;top:0;left:0;overflow:hidden;white-space:nowrap;width:0;color:#f5a623}
-.stars-fill::before{content:"★★★★★";letter-spacing:3px}
+.stars-fill::before{content:"★★★★★";letter-spacing:2px}
+
+.results-box{border:1px solid rgba(120,120,120,.25);border-radius:12px;padding:14px;margin-top:12px;background:rgba(0,0,0,0.02)}
+[data-theme="dark"] .results-box{border-color:rgba(255,255,255,.15);background:rgba(255,255,255,0.03)}
+
+
+.rec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;align-items:start}
+.rec-tile{text-align:center}
+.rec-poster{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:10px;display:block;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.rec-title{font-size:13px;line-height:1.3;margin-top:2px;min-height:34px} 
 .caption{text-align:center;margin-top:10px;line-height:1.2}
 </style>
 """, unsafe_allow_html=True)
 
-# ------------------------------
-# Banner + Title + Form (CENTERED)
-# ------------------------------
+
 L, C, R = st.columns([1, 6, 1])   # C is the centered content column
 with C:
+    # Banner (fits same width as the form)
     try:
         banner = Image.open("banner.webp")
-        st.image(banner, use_container_width=True)  # banner matches same content width as form
+        st.image(banner, use_container_width=True)
     except Exception:
         pass
 
@@ -49,18 +57,16 @@ TMDB_API_KEY = os.getenv("TMDB_API_KEY") or st.secrets.get("TMDB_API_KEY", None)
 MOVIE_DIC_ID = "1DwzwzVJ_rwpNt-IN92ymqYRbWsREpivZ"   # movie_dic.pkl
 SIMILARITY_ID = "1wOIEQa6K6aVwklVrgH8-RyxrbocFr-GT"  # similarity.pkl
 
-# ------------------------------
-# Helpers
-# ------------------------------
-def download_file(file_id, output):
-    """Download file from Google Drive if not exists"""
+
+def download_file(file_id: str, output: str):
+    """Download file from Google Drive if not exists."""
     if not os.path.exists(output):
         url = f"https://drive.google.com/uc?id={file_id}"
         gdown.download(url, output, quiet=False)
 
-def fetch_poster(movie_id):
-    """Fetch poster from TMDB API"""
-    placeholder = "https://via.placeholder.com/500x750.png?text=No+Image"
+def fetch_poster(movie_id: int) -> str:
+    """Fetch poster from TMDB API (w200 for speed)."""
+    placeholder = "https://via.placeholder.com/200x300.png?text=No+Image"
     if not TMDB_API_KEY:
         return placeholder
     url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={TMDB_API_KEY}&language=en-US"
@@ -69,12 +75,12 @@ def fetch_poster(movie_id):
         response.raise_for_status()
         data = response.json()
         if data.get("poster_path"):
-            return "https://image.tmdb.org/t/p/w500" + data["poster_path"]
+            return "https://image.tmdb.org/t/p/w200" + data["poster_path"]
     except Exception:
         pass
     return placeholder
 
-def _stars_from_score(score, s_min, s_max):
+def _stars_from_score(score: float, s_min: float, s_max: float):
     """Map similarity -> 0..5 stars (float) via min–max scaling (per query)."""
     if s_max <= s_min:
         rating = 5.0 if score > 0 else 0.0
@@ -83,7 +89,7 @@ def _stars_from_score(score, s_min, s_max):
     rating = max(0.0, min(5.0, float(rating)))
     return rating, rating / 5.0 * 100.0  # (stars, percent width)
 
-def recommend(movie, k=12):
+def recommend(movie: str, k: int = 12):
     """
     Return top-k similar movies with dicts:
     { title, poster, stars (0..5), stars_pct (0..100 for CSS) }
@@ -112,18 +118,14 @@ def recommend(movie, k=12):
         recs.append({"title": title, "poster": poster, "stars": stars, "stars_pct": stars_pct})
     return recs
 
-# ------------------------------
-# Load artifacts
-# ------------------------------
+
 download_file(MOVIE_DIC_ID, "movie_dic.pkl")
 download_file(SIMILARITY_ID, "similarity.pkl")
 movies = pickle.load(open("movie_dic.pkl", "rb"))
 similarity = pickle.load(open("similarity.pkl", "rb"))
 movies = pd.DataFrame(movies)
 
-# ------------------------------
-# Controls (still inside centered column)
-# ------------------------------
+
 with C:
     col1, col2 = st.columns([3, 1])
     with col1:
@@ -141,9 +143,7 @@ with C:
     with b2:
         go = st.button("Recommend", type="primary", use_container_width=True)
 
-# ------------------------------
-# Results (also inside centered column so widths match)
-# ------------------------------
+
 if go and selected_movie:
     recs = recommend(selected_movie, k=k)
 
@@ -152,18 +152,24 @@ if go and selected_movie:
             st.warning("Movie not found in database.")
         else:
             st.subheader(f"Top {len(recs)} Recommendations")
-            cols = st.columns(min(5, len(recs)), gap="large")
-            for i, r in enumerate(recs):
-                with cols[i % len(cols)]:
-                    st.image(r["poster"], use_container_width=True)
-                    st.markdown(
-                        f"""
-                        <p class="caption">
-                            <strong>{r["title"]}</strong><br>
-                            <span class="stars" aria-label="rating">
-                              <span class="stars-fill" style="width:{r["stars_pct"]:.0f}%"></span>
-                            </span>
-                        </p>
-                        """,
-                        unsafe_allow_html=True,
-                    )
+
+            # bordered wrapper that expands with content
+            st.markdown('<div class="results-box">', unsafe_allow_html=True)
+
+            # responsive grid
+            st.markdown('<div class="rec-grid">', unsafe_allow_html=True)
+            for r in recs:
+                st.markdown(
+                    f"""
+                    <div class="rec-tile">
+                        <img class="rec-poster" src="{r['poster']}" alt="{r['title']}"/>
+                        <div class="stars" aria-label="rating">
+                          <span class="stars-fill" style="width:{r['stars_pct']:.0f}%"></span>
+                        </div>
+                        <div class="rec-title">{r['title']}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            st.markdown('</div>', unsafe_allow_html=True)   # .rec-grid
+            st.markdown('</div>', unsafe_allow_html=True)   # .results-box
