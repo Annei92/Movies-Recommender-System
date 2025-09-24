@@ -49,15 +49,22 @@ st.markdown("""
   box-shadow: 0 1px 3px rgba(0,0,0,.08);
 }
 
-/* stars: visual-only rating; no overlap with title */
+/* ⭐ Reserve a dedicated row for stars so they never overlap title */
+.stars-wrap{
+  height: 18px;                 /* keep in sync with .stars font-size */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 6px 0 4px;            /* space below poster & above title */
+}
+
+/* star glyphs (visual-only) */
 .stars{
   position: relative;
-  display: inline-block;
-  font-size: 12px;
-  line-height: 1.2;
-  margin-top: 4px;
-  margin-bottom: 4px;
-  color: #d0d4db;
+  display: block;
+  font-size: 12px;              /* small stars for compact tiles */
+  line-height: 1;
+  color: #d0d4db;               /* empty star color */
   letter-spacing: 2px;
   user-select: none;
 }
@@ -65,18 +72,21 @@ st.markdown("""
 .stars-fill{
   position: absolute; top: 0; left: 0;
   overflow: hidden; white-space: nowrap; width: 0;
-  color: #f5a623;
+  color: #f5a623;               /* filled star color */
 }
 .stars-fill::before{ content: "★★★★★"; letter-spacing: 2px; }
 
-/* titles: keep rows aligned even when wrapping */
+/* titles: small, wrap nicely, rows align */
 .rec-title{
   font-size: 12px;
   line-height: 1.25;
-  min-height: 30px;
+  min-height: 30px;             /* ~2 lines reserved */
+  margin: 0;                    /* avoid crashing into stars-wrap */
+  word-break: break-word;
+  text-wrap: balance;
 }
 
-/* generic caption style (if needed) */
+/* generic caption style (if ever needed) */
 .caption{text-align:center;margin-top:10px;line-height:1.2}
 </style>
 """, unsafe_allow_html=True)
@@ -219,9 +229,13 @@ if go and selected_movie:
                     f"""
                     <div class="rec-tile">
                         <img class="rec-poster" src="{r['poster']}" alt="{r['title']}"/>
-                        <span class="stars" aria-label="rating">
-                          <span class="stars-fill" style="width:{r['stars_pct']:.0f}%"></span>
-                        </span>
+
+                        <div class="stars-wrap">
+                          <span class="stars" aria-label="rating">
+                            <span class="stars-fill" style="width:{r['stars_pct']:.0f}%"></span>
+                          </span>
+                        </div>
+
                         <div class="rec-title">{r['title']}</div>
                     </div>
                     """,
