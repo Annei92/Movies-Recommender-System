@@ -170,8 +170,14 @@ with ctr:
         k = st.slider("How many recommendations?", 3, 30, value=12, step=1)
 
 
-if st.button("Recommend", use_container_width=True) and selected_movie:
+b1, b2, b3 = st.columns([3, 2, 3])
+with b2:
+    go = st.button("Recommend", type="primary", use_container_width=True)
+
+if go and selected_movie:
     recs = recommend(selected_movie, k=k)
+    ...
+
 
     if not recs:
         st.warning("Movie not found in database.")
