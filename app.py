@@ -25,6 +25,45 @@ st.markdown("""
 .caption{text-align:center;margin-top:10px;line-height:1.2}
 </style>
 """, unsafe_allow_html=True)
+st.markdown("""
+<style>
+/* bordered container that expands with content */
+.results-box{
+  border: 1px solid rgba(120,120,120,.25);
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 12px;
+  background: rgba(0,0,0,0.02);
+}
+[data-theme="dark"] .results-box{
+  border-color: rgba(255,255,255,.15);
+  background: rgba(255,255,255,0.03);
+}
+
+/* compact responsive grid for recommendations */
+.rec-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+.rec-tile{ text-align:center; }
+.rec-poster{
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+.rec-title{
+  font-size: 12px;
+  margin-top: 6px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # ------------------------------
 # Banner + Title + Form (CENTERED)
@@ -147,23 +186,29 @@ with C:
 if go and selected_movie:
     recs = recommend(selected_movie, k=k)
 
-    with C:
+    with C:  # keep results aligned with the same centered column
         if not recs:
             st.warning("Movie not found in database.")
         else:
             st.subheader(f"Top {len(recs)} Recommendations")
-            cols = st.columns(min(5, len(recs)), gap="large")
-            for i, r in enumerate(recs):
-                with cols[i % len(cols)]:
-                    st.image(r["poster"], use_container_width=True)
-                    st.markdown(
-                        f"""
-                        <p class="caption">
-                            <strong>{r["title"]}</strong><br>
-                            <span class="stars" aria-label="rating">
-                              <span class="stars-fill" style="width:{r["stars_pct"]:.0f}%"></span>
-                            </span>
-                        </p>
-                        """,
-                        unsafe_allow_html=True,
-                    )
+
+            # bordered container that expands with the grid content
+            st.markdown('<div class="results-box">', unsafe_allow_html=True)
+
+            # responsive grid of small posters
+            st.markdown('<div class="rec-grid">', unsafe_allow_html=True)
+            for r in recs:
+                st.markdown(
+                    f"""
+                    <div class="rec-tile">
+                        <img class="rec-poster" src="{r['poster']}" alt="{r['title']}"/>
+                        <div class="stars" aria-label="rating">
+                          <span class="stars-fill" style="width:{r['stars_pct']:.0f}%"></span>
+                        </div>
+                        <div class="rec-title">{r['title']}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            st.markdown('</div>', unsafe_allow_html=True)   # close .rec-grid
+            st.markdown('</div>', unsafe_allow_html=True)   # close .results-box
