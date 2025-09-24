@@ -8,9 +8,7 @@ from dotenv import load_dotenv
 from PIL import Image
 import numpy as np
 
-# ------------------------------
-# UI: banner + page config
-# ------------------------------
+
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
 
 try:
@@ -26,14 +24,13 @@ st.markdown(
     <style>
     [data-testid="stVerticalBlock"] { gap: 0.75rem; }
 
-    /* Star rating component (visual only) */
     .stars {
         position: relative;
         display: inline-block;
-        font-size: 20px;        /* adjust star size */
+        font-size: 20px;       
         line-height: 1;
-        color: #d0d4db;         /* base (empty) star color */
-        letter-spacing: 3px;    /* space between stars */
+        color: #d0d4db;        
+        letter-spacing: 3px;   
         user-select: none;
     }
     .stars::before {
@@ -45,7 +42,7 @@ st.markdown(
         overflow: hidden;
         white-space: nowrap;
         width: 0;
-        color: #f5a623;         /* filled star color */
+        color: #f5a623;        
     }
     .stars-fill::before {
         content: "★★★★★";
@@ -62,9 +59,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ------------------------------
-# Config: env / keys
-# ------------------------------
+
 load_dotenv()
 TMDB_API_KEY = os.getenv("TMDB_API_KEY") or st.secrets.get("TMDB_API_KEY", None)
 
@@ -72,9 +67,6 @@ TMDB_API_KEY = os.getenv("TMDB_API_KEY") or st.secrets.get("TMDB_API_KEY", None)
 MOVIE_DIC_ID = "1DwzwzVJ_rwpNt-IN92ymqYRbWsREpivZ"   # movie_dic.pkl
 SIMILARITY_ID = "1wOIEQa6K6aVwklVrgH8-RyxrbocFr-GT"  # similarity.pkl
 
-# ------------------------------
-# Helpers
-# ------------------------------
 def download_file(file_id, output):
     """Download file from Google Drive if not exists"""
     if not os.path.exists(output):
@@ -145,9 +137,6 @@ def recommend(movie, k=5):
         })
     return recs
 
-# ------------------------------
-# Load artifacts
-# ------------------------------
 download_file(MOVIE_DIC_ID, "movie_dic.pkl")
 download_file(SIMILARITY_ID, "similarity.pkl")
 
@@ -155,9 +144,6 @@ movies = pickle.load(open("movie_dic.pkl", "rb"))
 similarity = pickle.load(open("similarity.pkl", "rb"))
 movies = pd.DataFrame(movies)
 
-# ------------------------------
-# UI controls
-# ------------------------------
 col1, col2 = st.columns([3, 1])
 with col1:
     selected_movie = st.selectbox(
@@ -169,9 +155,6 @@ with col1:
 with col2:
     k = st.slider("How many recommendations?", 3, 10, value=5)
 
-# ------------------------------
-# Action
-# ------------------------------
 if st.button("Recommend", use_container_width=True) and selected_movie:
     recs = recommend(selected_movie, k=k)
 
