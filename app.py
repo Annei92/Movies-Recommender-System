@@ -12,12 +12,11 @@ import numpy as np
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
 st.markdown("""
 <style>
-/* center the whole app and cap its width */
-.block-container {max-width: 1000px; margin: 0 auto;}
-/* optional: a bit more space under the banner */
-.banner-wrap { display:flex; justify-content:center; margin: 8px 0 18px; }
+/* cap the page width and center everything */
+.block-container { max-width: 1000px; margin: 0 auto; }
 </style>
 """, unsafe_allow_html=True)
+
 
 
 try:
