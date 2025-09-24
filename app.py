@@ -22,9 +22,9 @@ st.markdown("""
 
 try:
     banner = Image.open("banner.webp")
-    c1, c2, c3 = st.columns([1, 2, 1])   # center column is narrower
+    c1, c2, c3 = st.columns([1, 2, 1])  
     with c2:
-        st.image(banner, use_container_width=True)  # will fit the middle column
+        st.image(banner, use_container_width=True) 
 except Exception:
     pass
 
@@ -156,16 +156,19 @@ movies = pickle.load(open("movie_dic.pkl", "rb"))
 similarity = pickle.load(open("similarity.pkl", "rb"))
 movies = pd.DataFrame(movies)
 
-col1, col2 = st.columns([3, 1])
-with col1:
-    selected_movie = st.selectbox(
-        "Search for a movie:", 
-        movies["title"].values, 
-        index=None, 
-        placeholder="Type to search…"
-    )
-with col2:
-    k = st.slider("How many recommendations?", 3, 10, value=5)
+ctr_left, ctr, ctr_right = st.columns([1, 6, 1])
+with ctr:
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        selected_movie = st.selectbox(
+            "Search for a movie:",
+            movies["title"].values,
+            index=None,
+            placeholder="Type to search…"
+        )
+    with col2:
+        k = st.slider("How many recommendations?", 3, 30, value=12, step=1)
+
 
 if st.button("Recommend", use_container_width=True) and selected_movie:
     recs = recommend(selected_movie, k=k)
