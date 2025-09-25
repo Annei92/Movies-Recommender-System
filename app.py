@@ -7,28 +7,45 @@ import gdown
 from dotenv import load_dotenv
 from PIL import Image
 
-# ------------------------------
-# Page config + global width cap
-# ------------------------------
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
 st.markdown("""
 <style>
-/* cap the page width and center the whole app */
 .block-container { max-width: 1000px; margin: 0 auto; }
-/* smaller gaps for a tighter look */
 [data-testid="stVerticalBlock"] { gap: 0.75rem; }
-/* star rating (visual only) */
-.stars{position:relative;display:inline-block;font-size:20px;line-height:1;color:#d0d4db;letter-spacing:3px;user-select:none}
-.stars::before{content:"★★★★★"}
-.stars-fill{position:absolute;top:0;left:0;overflow:hidden;white-space:nowrap;width:0;color:#f5a623}
-.stars-fill::before{content:"★★★★★";letter-spacing:3px}
+
+.stars{
+  position:relative;
+  display:inline-block;
+  font-size:20px;
+  line-height:1;
+  color:#d0d4db;
+  letter-spacing:3px;
+  user-select:none;
+  white-space:nowrap;             /* ✅ keep in one line */
+}
+.stars::before{
+  content:"★★★★★";
+  white-space:nowrap;             /* ✅ base layer won’t wrap */
+}
+.stars-fill{
+  position:absolute;
+  top:0; left:0;
+  overflow:hidden;
+  white-space:nowrap;             /* already good, keep */
+  width:0;
+  color:#f5a623;
+}
+.stars-fill::before{
+  content:"★★★★★";
+  letter-spacing:3px;
+  white-space:nowrap;             /* ✅ fill won’t wrap */
+}
+
 .caption{text-align:center;margin-top:10px;line-height:1.2}
 </style>
 """, unsafe_allow_html=True)
 
-# ------------------------------
-# Banner + Title + Form (CENTERED)
-# ------------------------------
+
 L, C, R = st.columns([1, 6, 1])   # C is the centered content column
 with C:
     try:
@@ -39,9 +56,6 @@ with C:
 
     st.markdown("<h1 style='text-align:center;'>Movie Recommender System</h1>", unsafe_allow_html=True)
 
-# ------------------------------
-# Secrets / env
-# ------------------------------
 load_dotenv()
 TMDB_API_KEY = os.getenv("TMDB_API_KEY") or st.secrets.get("TMDB_API_KEY", None)
 
@@ -112,18 +126,14 @@ def recommend(movie, k=12):
         recs.append({"title": title, "poster": poster, "stars": stars, "stars_pct": stars_pct})
     return recs
 
-# ------------------------------
-# Load artifacts
-# ------------------------------
+
 download_file(MOVIE_DIC_ID, "movie_dic.pkl")
 download_file(SIMILARITY_ID, "similarity.pkl")
 movies = pickle.load(open("movie_dic.pkl", "rb"))
 similarity = pickle.load(open("similarity.pkl", "rb"))
 movies = pd.DataFrame(movies)
 
-# ------------------------------
-# Controls (still inside centered column)
-# ------------------------------
+
 with C:
     col1, col2 = st.columns([3, 1])
     with col1:
@@ -141,9 +151,7 @@ with C:
     with b2:
         go = st.button("Recommend", type="primary", use_container_width=True)
 
-# ------------------------------
-# Results (also inside centered column so widths match)
-# ------------------------------
+
 if go and selected_movie:
     recs = recommend(selected_movie, k=k)
 
