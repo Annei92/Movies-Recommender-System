@@ -41,7 +41,15 @@ st.markdown("""
   white-space:nowrap;             /* ✅ fill won’t wrap */
 }
 
-.caption{text-align:center;margin-top:10px;line-height:1.2}
+.caption{ text-align:center; margin-top:10px; line-height:1.2 }
+.caption .title{
+  display:block;
+  font-weight:700;
+  margin:8px 0 6px;
+  white-space:nowrap;        /* ✅ force one line */
+  overflow:hidden;           /* ✅ clip overflow */
+  text-overflow:ellipsis;    /* ✅ show … when clipped */
+}
 </style>
 """, unsafe_allow_html=True)
 
