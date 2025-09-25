@@ -1,69 +1,69 @@
-import streamlit as st
-import pickle
-import pandas as pd
-import requests
+# app.py
 import os
+import pickle
+import requests
+import pandas as pd
+import streamlit as st
 import gdown
-from dotenv import load_dotenv
 from PIL import Image
 
+# --- optional dotenv (won't crash if not installed) ---
+try:
+    from dotenv import load_dotenv  # type: ignore
+except Exception:  # package not installed
+    def load_dotenv(*args, **kwargs):
+        return False
+
+# ------------------------------
+# Page + Global Styles
+# ------------------------------
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
+
 st.markdown("""
 <style>
 .block-container { max-width: 1000px; margin: 0 auto; }
 [data-testid="stVerticalBlock"] { gap: 0.75rem; }
 
+/* ⭐ keep stars on one line */
 .stars{
-  position:relative;
-  display:inline-block;
-  font-size:20px;
-  line-height:1;
-  color:#d0d4db;
-  letter-spacing:3px;
-  user-select:none;
-  white-space:nowrap;            
+  position:relative; display:inline-block; font-size:20px; line-height:1;
+  color:#d0d4db; letter-spacing:3px; user-select:none; white-space:nowrap;
 }
-.stars::before{
-  content:"★★★★★";
-  white-space:nowrap;            
-}
+.stars::before{ content:"★★★★★"; white-space:nowrap; }
 .stars-fill{
-  position:absolute;
-  top:0; left:0;
-  overflow:hidden;
-  white-space:nowrap;            
-  width:0;
-  color:#f5a623;
+  position:absolute; top:0; left:0; overflow:hidden; white-space:nowrap;
+  width:0; color:#f5a623;
 }
-.stars-fill::before{
-  content:"★★★★★";
-  letter-spacing:3px;
-  white-space:nowrap;             
+.stars-fill::before{ content:"★★★★★"; letter-spacing:3px; white-space:nowrap; }
+
+/* 🎬 title: one line with ellipsis */
+.caption{ text-align:center; margin-top:10px; line-height:1.2; }
+.caption .title{
+  display:block; font-weight:700; margin:8px 0 6px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 
-.caption{ text-align:center; margin-top:10px; line-height:1.2 }
-.caption .title{
-  display:block;
-  font-weight:700;
-  margin:8px 0 6px;
-  white-space:nowrap;        
-  overflow:hidden;          
-  text-overflow:ellipsis;   
+@media (max-width: 420px){
+  .stars{ font-size:18px; letter-spacing:2px; }
 }
 </style>
 """, unsafe_allow_html=True)
 
-
-L, C, R = st.columns([1, 6, 1])   # C is the centered content column
+# ------------------------------
+# Header / Banner
+# ------------------------------
+L, C, R = st.columns([1, 6, 1])
 with C:
     try:
         banner = Image.open("banner.webp")
-        st.image(banner, use_container_width=True)  # banner matches same content width as form
+        st.image(banner, use_container_width=True)
     except Exception:
         pass
-
     st.markdown("<h1 style='text-align:center;'>Movie Recommender System</h1>", unsafe_allow_html=True)
 
+# ------------------------------
+# Config / Secrets
+# ------------------------------
 load_dotenv()
 TMDB_API_KEY = os.getenv("TMDB_API_KEY") or st.secrets.get("TMDB_API_KEY", None)
 
@@ -74,51 +74,60 @@ SIMILARITY_ID = "1wOIEQa6K6aVwklVrgH8-RyxrbocFr-GT"  # similarity.pkl
 # ------------------------------
 # Helpers
 # ------------------------------
-def download_file(file_id, output):
-    """Download file from Google Drive if not exists"""
+@st.cache_data(show_spinner=False)
+def _download_once(file_id: str, output: str) -> str:
+    """Download a file from Google Drive to local path if missing; return path."""
     if not os.path.exists(output):
         url = f"https://drive.google.com/uc?id={file_id}"
-        gdown.download(url, output, quiet=False)
+        # quiet=True to keep logs clean on Streamlit Cloud
+        gdown.download(url, output, quiet=True)
+    return output
 
-def fetch_poster(movie_id):
-    """Fetch poster from TMDB API"""
-    placeholder = "https://via.placeholder.com/500x750.png?text=No+Image"
-    if not TMDB_API_KEY:
-        return placeholder
-    url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={TMDB_API_KEY}&language=en-US"
+def download_file(file_id: str, output: str) -> None:
+    _download_once(file_id, output)
+
+def _placeholder_poster() -> str:
+    return "https://via.placeholder.com/500x750.png?text=No+Image"
+
+@st.cache_data(ttl=24*3600, show_spinner=False)
+def fetch_poster(movie_id: int, api_key: str | None) -> str:
+    """Fetch poster URL from TMDB; cache for a day."""
+    if not api_key:
+        return _placeholder_poster()
+    url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={api_key}&language=en-US"
     try:
-        response = requests.get(url, timeout=12)
-        response.raise_for_status()
-        data = response.json()
-        if data.get("poster_path"):
-            return "https://image.tmdb.org/t/p/w500" + data["poster_path"]
+        r = requests.get(url, timeout=12)
+        r.raise_for_status()
+        data = r.json()
+        path = data.get("poster_path")
+        if path:
+            return "https://image.tmdb.org/t/p/w500" + path
     except Exception:
         pass
-    return placeholder
+    return _placeholder_poster()
 
-def _stars_from_score(score, s_min, s_max):
-    """Map similarity -> 0..5 stars (float) via min–max scaling (per query)."""
+def _stars_from_score(score: float, s_min: float, s_max: float) -> tuple[float, float]:
+    """Map similarity -> (0..5 stars, 0..100% width)."""
     if s_max <= s_min:
         rating = 5.0 if score > 0 else 0.0
     else:
         rating = 5.0 * ((score - s_min) / (s_max - s_min))
     rating = max(0.0, min(5.0, float(rating)))
-    return rating, rating / 5.0 * 100.0  # (stars, percent width)
+    return rating, rating / 5.0 * 100.0
 
-def recommend(movie, k=12):
+def recommend(df_movies: pd.DataFrame, similarity, movie: str, k: int = 12):
     """
     Return top-k similar movies with dicts:
     { title, poster, stars (0..5), stars_pct (0..100 for CSS) }
     """
     movie = str(movie).lower()
-    matches = movies[movies["title"].str.lower() == movie]
+    matches = df_movies[df_movies["title"].str.lower() == movie]
     if matches.empty:
         return []
     movie_index = matches.index[0]
     distances = similarity[movie_index]
     ranked = sorted(enumerate(distances), key=lambda x: x[1], reverse=True)
 
-    # Small pool to compute min/max for nicer scaling
     pool = [(idx, float(score)) for idx, score in ranked if idx != movie_index][:max(k, 16)]
     if not pool:
         return []
@@ -127,21 +136,31 @@ def recommend(movie, k=12):
 
     recs = []
     for idx, score in pool[:k]:
-        row = movies.iloc[idx]
+        row = df_movies.iloc[idx]
         title = str(row.title)
-        poster = fetch_poster(int(row.movie_id))
+        poster = fetch_poster(int(row.movie_id), TMDB_API_KEY)
         stars, stars_pct = _stars_from_score(score, s_min, s_max)
         recs.append({"title": title, "poster": poster, "stars": stars, "stars_pct": stars_pct})
     return recs
 
-
+# ------------------------------
+# Data: download + load safely
+# ------------------------------
 download_file(MOVIE_DIC_ID, "movie_dic.pkl")
 download_file(SIMILARITY_ID, "similarity.pkl")
-movies = pickle.load(open("movie_dic.pkl", "rb"))
-similarity = pickle.load(open("similarity.pkl", "rb"))
-movies = pd.DataFrame(movies)
 
+try:
+    with open("movie_dic.pkl", "rb") as f:
+        movies = pd.DataFrame(pickle.load(f))
+    with open("similarity.pkl", "rb") as f:
+        similarity = pickle.load(f)
+except Exception as e:
+    st.error("Failed to load model files. Please verify Google Drive IDs or files.")
+    st.stop()
 
+# ------------------------------
+# UI controls
+# ------------------------------
 with C:
     col1, col2 = st.columns([3, 1])
     with col1:
@@ -159,9 +178,18 @@ with C:
     with b2:
         go = st.button("Recommend", type="primary", use_container_width=True)
 
+    # Optional: auto-run when a movie is chosen (comment out if you prefer the button)
+    if selected_movie and not go:
+        go = True
 
+    if not TMDB_API_KEY:
+        st.info("No TMDB_API_KEY set. Posters will use placeholders. Add it via .env or Streamlit Secrets.")
+
+# ------------------------------
+# Results
+# ------------------------------
 if go and selected_movie:
-    recs = recommend(selected_movie, k=k)
+    recs = recommend(movies, similarity, selected_movie, k=k)
 
     with C:
         if not recs:
@@ -172,17 +200,14 @@ if go and selected_movie:
             for i, r in enumerate(recs):
                 with cols[i % len(cols)]:
                     st.image(r["poster"], use_container_width=True)
-                    st.markdown(
-                       st.markdown(
-                        f"""
-                          <p class="caption">
-                          <span class="title" title="{r["title"]}">{r["title"]}</span>
-                          <span class="stars" aria-label="rating {r["stars"]:.1f} of 5">
-                           <span class="stars-fill" style="width:{r["stars_pct"]:.0f}%"></span>
-                          </span>
-                          </p>
-                          """,
-                        unsafe_allow_html=True,
-)
 
-                    )
+                    # IMPORTANT: call st.markdown by itself (no st.write(st.markdown(...)))
+                    html = f"""
+                    <p class="caption">
+                        <span class="title" title="{r["title"]}">{r["title"]}</span>
+                        <span class="stars" aria-label="rating {r["stars"]:.1f} of 5">
+                          <span class="stars-fill" style="width:{r["stars_pct"]:.0f}%"></span>
+                        </span>
+                    </p>
+                    """
+                    st.markdown(html, unsafe_allow_html=True)
