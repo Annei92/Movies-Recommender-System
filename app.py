@@ -21,24 +21,24 @@ st.markdown("""
   color:#d0d4db;
   letter-spacing:3px;
   user-select:none;
-  white-space:nowrap;             /* ✅ keep in one line */
+  white-space:nowrap;            
 }
 .stars::before{
   content:"★★★★★";
-  white-space:nowrap;             /* ✅ base layer won’t wrap */
+  white-space:nowrap;            
 }
 .stars-fill{
   position:absolute;
   top:0; left:0;
   overflow:hidden;
-  white-space:nowrap;             /* already good, keep */
+  white-space:nowrap;            
   width:0;
   color:#f5a623;
 }
 .stars-fill::before{
   content:"★★★★★";
   letter-spacing:3px;
-  white-space:nowrap;             /* ✅ fill won’t wrap */
+  white-space:nowrap;             
 }
 
 .caption{ text-align:center; margin-top:10px; line-height:1.2 }
@@ -46,9 +46,9 @@ st.markdown("""
   display:block;
   font-weight:700;
   margin:8px 0 6px;
-  white-space:nowrap;        /* ✅ force one line */
-  overflow:hidden;           /* ✅ clip overflow */
-  text-overflow:ellipsis;    /* ✅ show … when clipped */
+  white-space:nowrap;        
+  overflow:hidden;          
+  text-overflow:ellipsis;   
 }
 </style>
 """, unsafe_allow_html=True)
@@ -173,13 +173,16 @@ if go and selected_movie:
                 with cols[i % len(cols)]:
                     st.image(r["poster"], use_container_width=True)
                     st.markdown(
+                       st.markdown(
                         f"""
-                        <p class="caption">
-                            <strong>{r["title"]}</strong><br>
-                            <span class="stars" aria-label="rating">
-                              <span class="stars-fill" style="width:{r["stars_pct"]:.0f}%"></span>
-                            </span>
-                        </p>
-                        """,
+                          <p class="caption">
+                          <span class="title" title="{r["title"]}">{r["title"]}</span>
+                          <span class="stars" aria-label="rating {r["stars"]:.1f} of 5">
+                           <span class="stars-fill" style="width:{r["stars_pct"]:.0f}%"></span>
+                          </span>
+                          </p>
+                          """,
                         unsafe_allow_html=True,
+)
+
                     )
