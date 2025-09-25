@@ -1,4 +1,4 @@
-# app.py
+
 import os
 import pickle
 import requests
@@ -7,16 +7,14 @@ import streamlit as st
 import gdown
 from PIL import Image
 
-# --- optional dotenv (won't crash if not installed) ---
+
 try:
     from dotenv import load_dotenv  # type: ignore
 except Exception:  # package not installed
     def load_dotenv(*args, **kwargs):
         return False
 
-# ------------------------------
-# Page + Global Styles
-# ------------------------------
+
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
 
 st.markdown("""
@@ -24,7 +22,7 @@ st.markdown("""
 .block-container { max-width: 1000px; margin: 0 auto; }
 [data-testid="stVerticalBlock"] { gap: 0.75rem; }
 
-/* ⭐ keep stars on one line */
+
 .stars{
   position:relative; display:inline-block; font-size:20px; line-height:1;
   color:#d0d4db; letter-spacing:3px; user-select:none; white-space:nowrap;
@@ -36,12 +34,20 @@ st.markdown("""
 }
 .stars-fill::before{ content:"★★★★★"; letter-spacing:3px; white-space:nowrap; }
 
-/* 🎬 title: one line with ellipsis */
+
 .caption{ text-align:center; margin-top:10px; line-height:1.2; }
+
 .caption .title{
-  display:block; font-weight:700; margin:8px 0 6px;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  display:-webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;     /* show up to 2 lines */
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:normal;         /* allow wrapping */
+  font-weight:700;
+  margin:8px 0 6px;
 }
+
 
 @media (max-width: 420px){
   .stars{ font-size:18px; letter-spacing:2px; }
@@ -49,9 +55,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ------------------------------
-# Header / Banner
-# ------------------------------
+
 L, C, R = st.columns([1, 6, 1])
 with C:
     try:
@@ -61,9 +65,7 @@ with C:
         pass
     st.markdown("<h1 style='text-align:center;'>Movie Recommender System</h1>", unsafe_allow_html=True)
 
-# ------------------------------
-# Config / Secrets
-# ------------------------------
+
 load_dotenv()
 TMDB_API_KEY = os.getenv("TMDB_API_KEY") or st.secrets.get("TMDB_API_KEY", None)
 
@@ -71,9 +73,6 @@ TMDB_API_KEY = os.getenv("TMDB_API_KEY") or st.secrets.get("TMDB_API_KEY", None)
 MOVIE_DIC_ID = "1DwzwzVJ_rwpNt-IN92ymqYRbWsREpivZ"   # movie_dic.pkl
 SIMILARITY_ID = "1wOIEQa6K6aVwklVrgH8-RyxrbocFr-GT"  # similarity.pkl
 
-# ------------------------------
-# Helpers
-# ------------------------------
 @st.cache_data(show_spinner=False)
 def _download_once(file_id: str, output: str) -> str:
     """Download a file from Google Drive to local path if missing; return path."""
@@ -143,9 +142,7 @@ def recommend(df_movies: pd.DataFrame, similarity, movie: str, k: int = 12):
         recs.append({"title": title, "poster": poster, "stars": stars, "stars_pct": stars_pct})
     return recs
 
-# ------------------------------
-# Data: download + load safely
-# ------------------------------
+
 download_file(MOVIE_DIC_ID, "movie_dic.pkl")
 download_file(SIMILARITY_ID, "similarity.pkl")
 
@@ -158,9 +155,7 @@ except Exception as e:
     st.error("Failed to load model files. Please verify Google Drive IDs or files.")
     st.stop()
 
-# ------------------------------
-# UI controls
-# ------------------------------
+
 with C:
     col1, col2 = st.columns([3, 1])
     with col1:
@@ -185,9 +180,7 @@ with C:
     if not TMDB_API_KEY:
         st.info("No TMDB_API_KEY set. Posters will use placeholders. Add it via .env or Streamlit Secrets.")
 
-# ------------------------------
-# Results
-# ------------------------------
+
 if go and selected_movie:
     recs = recommend(movies, similarity, selected_movie, k=k)
 
