@@ -4,3 +4,4 @@ nltk
 streamlit
 requests
 gdown
+python-dotenv>=1.0.0
